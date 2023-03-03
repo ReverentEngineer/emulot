@@ -1,0 +1,15 @@
+[package]
+name = "emulot"
+version = "1.0.0"
+description = "A configuration management solution for QEMU"
+edition = "2021"
+authors = ["Jeff Caffrey-Hill <jeff@caffreyhill.com>"]
+license = "MIT"
+repository = "https://github.com/ReverentEngineer/emulot"
+readme = "README.md"
+keywords = ["emulation", "management", "QEMU"]
+
+[dependencies]
+clap = { version = "4.1.8", features = ["derive"] }
+serde = { version = "1.0.152", features = ["derive"] }
+serde_yaml = "0.9.17"
