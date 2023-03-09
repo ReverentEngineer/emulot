@@ -1,46 +1,9 @@
-use core::fmt;
-use std::{
-    process::Child,
-    io
+use std::process::Child;
+use crate::{
+    Error,
+    ErrorKind,
+    config::GuestConfig
 };
-use crate::config::GuestConfig;
-
-#[derive(Debug, PartialEq)]
-enum ErrorKind {
-    IOError,
-    AlreadyRunning,
-    AlreadyStopped
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Error {
-    #[allow(dead_code)]
-    kind: ErrorKind,
-    message: String
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl Error {
-
-    fn new(kind: ErrorKind, message: String) -> Self {
-        Self {
-            kind,
-            message
-        }
-    }
-
-}
-
-impl From<io::Error> for Error {
-    fn from(error: io::Error) -> Self {
-        Self::new(ErrorKind::IOError, error.to_string())
-    }
-}
 
 /// Status of Guest
 #[derive(PartialEq)]
@@ -74,11 +37,12 @@ impl Guest {
         }
     }
 
-    #[allow(dead_code)]
     pub fn stop(&mut self) -> Result<(), Error> {
-        self.process.as_mut()
+        self.process
+            .take()
             .ok_or(Error::new(ErrorKind::AlreadyStopped, format!("Already stopped")))?
             .kill()?;
+        self.process = None;
         Ok(())
     }
 
