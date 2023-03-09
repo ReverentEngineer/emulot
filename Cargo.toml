@@ -10,6 +10,9 @@ readme = "README.md"
 keywords = ["emulation", "management", "QEMU"]
 
 [dependencies]
+axum = { version = "0.6.10", features = ["macros"] }
+chashmap = "2.2.2"
 clap = { version = "4.1.8", features = ["derive"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_yaml = "0.9.17"
+tokio = { version = "1.26.0", features = ["rt", "macros"] }

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use clap::builder::{TypedValueParser, ValueParserFactory};
 use std::process::Command;
 
 mod drive;
@@ -30,7 +29,7 @@ impl<T> Args for Option<T> where T: Args {
 
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize,)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct GuestConfig {
     arch: String,
     memory: u64,
@@ -56,41 +55,6 @@ pub struct GuestConfig {
     drive: Option<Vec<DriveConfig>>
 }
 
-impl ValueParserFactory for GuestConfig {
-    type Parser = GuestConfigParser;
-
-    fn value_parser() -> Self::Parser {
-        GuestConfigParser
-    }
-}
-
-#[derive(Clone)]
-pub struct GuestConfigParser;
-
-impl TypedValueParser for GuestConfigParser {
-    type Value = GuestConfig;
-
-    fn parse_ref(
-        &self,
-        _cmd: &clap::Command,
-        _arg: Option<&clap::Arg>,
-        value: &std::ffi::OsStr,
-    ) -> Result<Self::Value, clap::Error> {
-        if let Some(config_file) = value.to_str() {
-            use clap::error::ErrorKind;
-            let file = std::fs::File::open(config_file)?;
-            serde_yaml::from_reader(file)
-               .map_err(|err| clap::Error::raw(ErrorKind::Io,  err))
-        } else {
-            Err(clap::Error::new(clap::error::ErrorKind::InvalidUtf8))
-        }
-    }
-}
-
-fn default_display() -> String {
-    format!("none")
-}
-
 impl GuestConfig {
     pub(crate) fn as_cmd(&self) -> Command {
         let mut command = Command::new(format!("qemu-system-{}", self.arch));
@@ -111,4 +75,8 @@ impl GuestConfig {
         command.arg("-display").arg(&self.display);
         command
     }
+}
+
+fn default_display() -> String {
+    format!("none")
 }
