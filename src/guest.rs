@@ -1,4 +1,7 @@
-use std::process::Child;
+use tokio::process::{
+    Command,
+    Child
+};
 use crate::{
     Error,
     ErrorKind,
@@ -30,25 +33,27 @@ impl Guest {
 
     pub fn run(&mut self) -> Result<(), Error> {
         if self.status()? != Status::Running {
-            self.process = Some(self.config.as_cmd().spawn()?);
+            let mut command = Into::<Command>::into(self.config.as_cmd()); 
+            self.process = Some(command.spawn()?);
             Ok(())
         } else {
             Err(Error::new(ErrorKind::AlreadyRunning, format!("Already running")))
         }
     }
 
-    pub fn stop(&mut self) -> Result<(), Error> {
+    pub async fn stop(&mut self) -> Result<(), Error> {
         self.process
             .take()
             .ok_or(Error::new(ErrorKind::AlreadyStopped, format!("Already stopped")))?
-            .kill()?;
+            .kill()
+            .await?;
         self.process = None;
         Ok(())
     }
 
-    pub fn wait(&mut self) -> Result<std::process::ExitStatus, Error> {
+    pub async fn wait(&mut self) -> Result<std::process::ExitStatus, Error> {
         if let Some(ref mut process) = &mut self.process {
-            Ok(process.wait()?)
+            Ok(process.wait().await?)
         } else {
             Err(Error::new(ErrorKind::AlreadyStopped, format!("Already stopped")))
         }
