@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use chashmap::CHashMap;
 use crate::{
     Error,
@@ -36,7 +37,7 @@ impl Orchestrator {
         }
 
         if let Some(guest) = guest {
-            let mut guard = guest.lock().unwrap();
+            let mut guard = guest.lock().await;
             guard.run()?;
             Ok(())
         } else {
@@ -46,8 +47,8 @@ impl Orchestrator {
 
     pub async fn stop(&self, id: &str) -> Result<(), Error> {
         if let Some(guest) = self.guests.get(&id.to_string()) {
-            let mut guard = guest.lock().unwrap();
-            guard.stop()?;
+            let mut guard = guest.lock().await;
+            guard.stop().await?;
             Ok(())
         } else {
             Err(Error::new(ErrorKind::NoSuchEntity, "Guest not found"))

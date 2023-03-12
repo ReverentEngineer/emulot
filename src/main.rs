@@ -103,13 +103,14 @@ struct Args {
 
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     match args.command {
         Command::Run { config } => {
             let mut guest: Guest = config.into();
             guest.run().unwrap();
-            guest.wait().unwrap();
+            guest.wait().await.unwrap();
         },
         Command::Daemon { ref config } => daemon::run(config)
     }
