@@ -38,7 +38,7 @@ impl Orchestrator {
 
         if let Some(guest) = guest {
             let mut guard = guest.lock().await;
-            guard.run()?;
+            guard.run().await?;
             Ok(())
         } else {
             Err(Error::new(ErrorKind::NoSuchEntity, "Guest not found"))

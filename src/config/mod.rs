@@ -56,6 +56,21 @@ pub struct GuestConfig {
 }
 
 impl GuestConfig {
+    
+    pub fn new(arch: String, memory: u64) -> Self {
+        Self {
+            arch,
+            memory,
+            boot: None,
+            cpu: None,
+            smp: None,
+            accel: None,
+            machine: None,
+            display: "none".to_string(),
+            drive: None
+        }
+    }
+
     pub(crate) fn as_cmd(&self) -> Command {
         let mut command = Command::new(format!("qemu-system-{}", self.arch));
 
@@ -73,6 +88,7 @@ impl GuestConfig {
 
         command.arg("-m").arg(format!("{}", self.memory));
         command.arg("-display").arg(&self.display);
+        command.args(["-chardev", "stdio,id=mon0", "-mon", "chardev=mon0,mode=control"]);
         command
     }
 }
