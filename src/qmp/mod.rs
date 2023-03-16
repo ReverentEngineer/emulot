@@ -1,27 +1,21 @@
 use std::collections::BTreeMap;
 use serde::{
     Serialize,
-    Deserialize,
-    ser::SerializeMap,
+    Deserialize
 };
 
-/// QMP Command
-pub enum Command {
-    Capabilities
+#[derive(Serialize)]
+pub enum Execute {
+    #[serde(rename = "qmp_capabilities")]
+    QmpCapabilities,
+    #[serde(rename = "system_powerdown")]
+    SystemPowerDown
 }
 
-impl Serialize for Command {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-            let mut map = serializer.serialize_map(Some(1))?;
-            match self {
-                Self::Capabilities => {
-                    map.serialize_entry("execute", "qmp_capabilities")?;
-                }
-            }
-            map.end()
-    }
+/// QMP Command
+#[derive(Serialize)]
+pub struct Command {
+    pub execute: Execute
 }
 
 #[derive(Deserialize)]
