@@ -8,6 +8,7 @@ use clap::{
 };
 
 mod error;
+mod qmp;
 mod config;
 mod guest;
 mod storage;
@@ -109,7 +110,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match args.command {
         Command::Run { config } => {
             let mut guest: Guest = config.into();
-            guest.run().unwrap();
+            guest.run().await.unwrap();
             guest.wait().await.unwrap();
         },
         Command::Daemon { ref config } => daemon::run(config)

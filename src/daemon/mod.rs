@@ -17,11 +17,11 @@ use crate::{
 impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         let status_code = match self.kind() {
-            ErrorKind::IOError => StatusCode::INTERNAL_SERVER_ERROR,
             ErrorKind::AlreadyRunning => StatusCode::NOT_MODIFIED,
             ErrorKind::AlreadyStopped => StatusCode::NOT_MODIFIED,
             ErrorKind::AlreadyExists => StatusCode::CONFLICT,
             ErrorKind::NoSuchEntity => StatusCode::NOT_FOUND,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
         (status_code, format!("{self}")).into_response()
     }

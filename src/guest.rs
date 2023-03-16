@@ -1,10 +1,21 @@
-use tokio::process::{
-    Command,
-    Child
+use std::process::Stdio;
+use tokio::{
+    io::BufReader,
+    process::{
+        Child,
+        ChildStdin,
+        ChildStdout
+    }
 };
 use crate::{
     Error,
     ErrorKind,
+    qmp::{
+        Command,
+        Response,
+        AsyncSend,
+        AsyncReceive
+    },
     config::GuestConfig
 };
 
@@ -19,6 +30,8 @@ pub enum Status {
 pub struct Guest {
     config: GuestConfig,
     process: Option<Child>,
+    writer: Option<ChildStdin>,
+    reader: Option<BufReader<ChildStdout>>
 }
 
 impl From<Guest> for GuestConfig {
@@ -31,11 +44,36 @@ impl From<Guest> for GuestConfig {
 
 impl Guest {
 
-    pub fn run(&mut self) -> Result<(), Error> {
+    pub async fn run(&mut self) -> Result<(), Error> {
         if self.status()? != Status::Running {
-            let mut command = Into::<Command>::into(self.config.as_cmd()); 
-            self.process = Some(command.spawn()?);
-            Ok(())
+            let mut command = Into::<tokio::process::Command>::into(self.config.as_cmd()); 
+            command.stdin(Stdio::piped())
+                .stdout(Stdio::piped());
+            let mut child = command.spawn()?;
+            if let Some(reader) = child.stdout.take() {
+                let mut reader = BufReader::new(reader);
+                match reader.receive().await? {
+                    Response::Greeting(_) => (),
+                    _ => return Err(Error::new(ErrorKind::IOError, format!("No greeting received.")))
+                }
+                if let Some(mut writer) = child.stdin.take() {
+                    writer.send(Command::Capabilities)?.await?;
+                    match reader.receive().await? {
+                        Response::Return(_) => {
+                            self.writer = Some(writer);
+                            self.reader = Some(reader);
+                            self.process = Some(child);
+                            Ok(())
+                        },
+                        _ => Err(Error::new(ErrorKind::IOError, format!("Unexpected message received")))
+                    }
+                } else {
+                    Err(Error::new(ErrorKind::IOError, format!("Failed to communicate with guest")))
+                }
+
+            } else {
+                Err(Error::new(ErrorKind::IOError, format!("Failed to communicate with guest")))
+            }
         } else {
             Err(Error::new(ErrorKind::AlreadyRunning, format!("Already running")))
         }
@@ -77,8 +115,25 @@ impl From<GuestConfig> for Guest {
     fn from(config: GuestConfig) -> Self {
         Self {
             config,
-            process: None
+            process: None,
+            reader: None,
+            writer: None
         }
     }
 }
 
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[tokio::test]
+    async fn run() {
+        let config = GuestConfig::new("x86_64".to_string(), 512);
+        let mut guest = Into::<Guest>::into(config);
+        guest.run().await.unwrap();
+
+    }
+
+
+}
