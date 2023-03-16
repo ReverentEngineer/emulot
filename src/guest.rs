@@ -12,6 +12,7 @@ use crate::{
     ErrorKind,
     qmp::{
         Command,
+        Execute,
         Response,
         AsyncSend,
         AsyncReceive
@@ -57,7 +58,9 @@ impl Guest {
                     _ => return Err(Error::new(ErrorKind::IOError, format!("No greeting received.")))
                 }
                 if let Some(mut writer) = child.stdin.take() {
-                    writer.send(Command::Capabilities)?.await?;
+                    writer.send(Command {
+                        execute: Execute::QmpCapabilities
+                    })?.await?;
                     match reader.receive().await? {
                         Response::Return(_) => {
                             self.writer = Some(writer);
@@ -80,11 +83,47 @@ impl Guest {
     }
 
     pub async fn stop(&mut self) -> Result<(), Error> {
+        self.send(Command {
+            execute: Execute::SystemPowerDown
+        }).await?;
+        let _ = self.wait_for_return().await?;
+        Ok(())
+    }
+
+    async fn wait_for_return(&mut self) -> Result<Response, Error> {
+        while match self.receive().await? {
+            Response::Return(contents) => return Ok(Response::Return(contents)),
+            Response::Error(_) => false,
+            _ => true,
+        } { 
+        }
+        unreachable!()
+    }
+
+    async fn send(&mut self, command: Command) -> Result<(), Error> {
+        if let Some(ref mut writer) = self.writer {
+            writer.send(command)?.await
+        } else {
+            Err(Error::new(ErrorKind::IOError, format!("Failed to communicate with guest")))
+        }
+    }
+
+    async fn receive(&mut self) -> Result<Response, Error> {
+        if let Some(ref mut reader) = self.reader {
+            reader.receive().await
+        } else {
+            Err(Error::new(ErrorKind::IOError, format!("Failed to communicate with guest")))
+        }
+    }
+
+    pub async fn kill(&mut self) -> Result<(), Error> {
         self.process
             .take()
             .ok_or(Error::new(ErrorKind::AlreadyStopped, format!("Already stopped")))?
             .kill()
             .await?;
+        self.writer = None;
+        self.reader = None;
         self.process = None;
         Ok(())
     }
@@ -132,7 +171,8 @@ mod tests {
         let config = GuestConfig::new("x86_64".to_string(), 512);
         let mut guest = Into::<Guest>::into(config);
         guest.run().await.unwrap();
-
+        guest.stop().await.unwrap();
+        guest.kill().await.unwrap();
     }
 
 
