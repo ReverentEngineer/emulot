@@ -20,7 +20,7 @@ pub fn router() -> Router
             .route("/remove/:name", delete(remove))
             .route("/list", get(list))
             .route("/run/:name", post(run))
-            .route("/stop/:name", post(stop))
+            .route("/shutdown/:name", post(shutdown))
 }
 
 async fn list(
@@ -56,10 +56,10 @@ async fn run(
     Ok(StatusCode::OK)
 }
 
-async fn stop(
+async fn shutdown(
     Path(name): Path<String>,
     state: Extension<State>) -> Result<StatusCode, Error>
 {
-    state.orchestrator.stop(&name).await?;
+    state.orchestrator.shutdown(&name).await?;
     Ok(StatusCode::OK)
 }

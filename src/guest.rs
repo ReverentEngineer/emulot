@@ -82,7 +82,7 @@ impl Guest {
         }
     }
 
-    pub async fn stop(&mut self) -> Result<(), Error> {
+    pub async fn shutdown(&mut self) -> Result<(), Error> {
         self.send(Command {
             execute: Execute::SystemPowerDown
         }).await?;
@@ -171,7 +171,7 @@ mod tests {
         let config = GuestConfig::new("x86_64".to_string(), 512);
         let mut guest = Into::<Guest>::into(config);
         guest.run().await.unwrap();
-        guest.stop().await.unwrap();
+        guest.shutdown().await.unwrap();
         guest.kill().await.unwrap();
     }
 
