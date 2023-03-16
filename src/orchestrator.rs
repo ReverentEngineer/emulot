@@ -45,10 +45,10 @@ impl Orchestrator {
         }
     }
 
-    pub async fn stop(&self, id: &str) -> Result<(), Error> {
+    pub async fn shutdown(&self, id: &str) -> Result<(), Error> {
         if let Some(guest) = self.guests.get(&id.to_string()) {
             let mut guard = guest.lock().await;
-            guard.stop().await?;
+            guard.shutdown().await?;
             Ok(())
         } else {
             Err(Error::new(ErrorKind::NoSuchEntity, "Guest not found"))
