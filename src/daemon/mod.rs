@@ -57,7 +57,6 @@ fn app(state: State) -> Router {
         .layer(Extension(state))
 }
 
-#[tokio::main(flavor = "current_thread")]
 pub async fn run(config: &DaemonConfig) {
     let config_storage = Arc::new(ConfigStorage::new(&config.url).await.expect("This shouldn't happen yet."));
     let state = State {
