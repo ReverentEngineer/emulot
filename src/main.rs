@@ -1,11 +1,9 @@
+use std::io;
 use clap::{
     Parser,
     Subcommand,
-    builder::{
-        TypedValueParser,
-        ValueParserFactory
-    }
 };
+use serde::Deserialize;
 
 mod error;
 mod qmp;
@@ -13,91 +11,81 @@ mod config;
 mod guest;
 mod storage;
 mod orchestrator;
+mod de;
 mod daemon;
+mod client;
 
 use error::{Error, ErrorKind};
 use config::GuestConfig;
 use guest::Guest;
 use daemon::DaemonConfig;
+use client::ClientConfig;
 
-impl ValueParserFactory for GuestConfig {
-    type Parser = GuestConfigParser;
-
-    fn value_parser() -> Self::Parser {
-        GuestConfigParser
-    }
+fn parse_guest_config(filename: &str) -> Result<GuestConfig, io::Error> {
+    let config = std::fs::read_to_string(filename)?;
+    toml::from_str(&config)
+        .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, format!("{err}")))
 }
 
-#[derive(Clone)]
-pub struct GuestConfigParser;
-
-impl TypedValueParser for GuestConfigParser {
-    type Value = GuestConfig;
-
-    fn parse_ref(
-        &self,
-        _cmd: &clap::Command,
-        _arg: Option<&clap::Arg>,
-        value: &std::ffi::OsStr,
-    ) -> Result<Self::Value, clap::Error> {
-        if let Some(config_file) = value.to_str() {
-            use clap::error::ErrorKind;
-            let file = std::fs::File::open(config_file)?;
-            serde_yaml::from_reader(file)
-               .map_err(|err| clap::Error::raw(ErrorKind::Io,  err))
-        } else {
-            Err(clap::Error::new(clap::error::ErrorKind::InvalidUtf8))
-        }
-    }
+fn parse_config(filename: &str) -> Result<Config, io::Error> {
+    let config = std::fs::read_to_string(filename)?;
+    toml::from_str(&config)
+        .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, format!("{err}")))
 }
 
-impl ValueParserFactory for DaemonConfig {
-    type Parser = DaemonConfigParser;
-
-    fn value_parser() -> Self::Parser {
-        DaemonConfigParser
+#[derive(Subcommand)]
+enum ClientCommand {
+    Start {
+        /// Guest to start
+        guest: String
+    },
+    Stop {
+        /// Guest to start
+        guest: String
     }
 }
-
-#[derive(Clone)]
-pub struct DaemonConfigParser;
-
-impl TypedValueParser for DaemonConfigParser {
-    
-    type Value = DaemonConfig;
-
-    fn parse_ref(
-        &self,
-        _cmd: &clap::Command,
-        _arg: Option<&clap::Arg>,
-        value: &std::ffi::OsStr,
-    ) -> Result<Self::Value, clap::Error> {
-        if let Some(config_file) = value.to_str() {
-            use clap::error::ErrorKind;
-            let file = std::fs::File::open(config_file)?;
-            serde_yaml::from_reader(file)
-               .map_err(|err| clap::Error::raw(ErrorKind::Io,  err))
-        } else {
-            Err(clap::Error::new(clap::error::ErrorKind::InvalidUtf8))
-        }
-    }
-}
-
-
 
 #[derive(Subcommand)]
 enum Command {
     Run {
-        config: GuestConfig
+        /// Config to run
+        #[arg(value_parser = parse_guest_config)] 
+        config: GuestConfig,
+
+        /// Validate configo nly
+        #[arg(long, default_value = "false")]
+        validate: bool
     },
-    Daemon {
-        config: DaemonConfig
+    Daemon,
+    Client {
+        /// Client conmmands to a daemon
+        #[command(subcommand)]
+        command: ClientCommand
     }
+}
+
+#[derive(Clone, Default, Deserialize)]
+struct Config {
+    daemon: DaemonConfig,
+    client: ClientConfig
+}
+
+#[cfg(target_os = "macos")]
+fn runtime_dir() -> String {
+    format!("{}/Library/Application Support/emulot", env!("HOME"))
+}
+
+fn default_url() -> url::Url {
+    url::Url::parse(&format!("unix://{}/daemon.sock", runtime_dir()))
+        .expect("There was an issue with the default daemon URL")
 }
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
+
+    #[arg(long, short, value_parser = parse_config)]
+    config: Option<Config>,
 
     #[command(subcommand)]
     command: Command
@@ -107,13 +95,28 @@ struct Args {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
+    let config = args.config.unwrap_or_default();
     match args.command {
-        Command::Run { config } => {
-            let mut guest: Guest = config.into();
-            guest.run().await.unwrap();
-            guest.wait().await.unwrap();
+        Command::Run { config, validate } => {
+            if !validate {
+                let mut guest: Guest = config.into();
+                guest.run().await.unwrap();
+                guest.wait().await.unwrap();
+            }
         },
-        Command::Daemon { ref config } => daemon::run(config).await
+        Command::Daemon => daemon::run(&config.daemon).await,
+        Command::Client { command } => {
+            match command {
+                ClientCommand::Start { guest } => {
+                    client::start(config.client, guest).await
+                        .unwrap()
+                },
+                ClientCommand::Stop { guest } => {
+                    client::stop(config.client, guest).await
+                        .unwrap()
+                }
+            }
+        }
     }
     Ok(())
 }
