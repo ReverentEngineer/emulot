@@ -1,0 +1,4 @@
+arch = "aarch64"
+memory = 512
+[machine]
+type = "virt"
