@@ -57,6 +57,7 @@ pub struct GuestConfig {
 
 impl GuestConfig {
     
+    #[allow(dead_code)]
     pub fn new(arch: String, memory: u64) -> Self {
         Self {
             arch,

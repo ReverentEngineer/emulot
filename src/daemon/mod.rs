@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    sync::Arc,
+    net::ToSocketAddrs,
+};
 use serde::Deserialize;
 use axum::{
     Extension,
@@ -12,7 +15,9 @@ use crate::{
     storage::ConfigStorage,
     orchestrator::Orchestrator
 };
+use url::Url;
 
+mod unix;
 
 impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
@@ -44,10 +49,22 @@ pub struct State {
 pub struct DaemonConfig {
 
     /// Daemon listen interface
-    listen: String,
+    #[serde(deserialize_with = "crate::de::deserialize_url")]
+    listen: Url,
 
     /// Database url
     url: String
+
+}
+
+impl Default for DaemonConfig {
+
+    fn default() -> Self {
+        Self {
+            listen: crate::default_url(),
+            url: String::new()
+        }
+    }
 
 }
 
@@ -63,7 +80,26 @@ pub async fn run(config: &DaemonConfig) {
         storage: config_storage.clone(),
         orchestrator: Orchestrator::new(config_storage).into()
     };
-    Server::bind(&config.listen.as_str().parse().unwrap())
-        .serve(app(state).into_make_service())
-        .await.expect("Failed to listen");
+    match config.listen.scheme() {
+        "tcp" => {
+            let host = config.listen.host_str().unwrap();
+            let port = config.listen.port().unwrap();
+            if let Some(addr) = format!("{host}:{port}").to_socket_addrs().unwrap().next() {
+                Server::bind(&addr)
+                    .serve(app(state).into_make_service())
+                   .await.expect("Failed to listen");
+            }
+        },
+        "unix" => {
+            let path = crate::de::percent_decode(config.listen.path()).expect("Failed to decode");
+            if std::fs::metadata(&path).is_ok() {
+                let _ = std::fs::remove_file(&path).expect("Failed to remove");
+            }
+            let acceptor = unix::UnixAcceptor::bind(path).expect("Failed to listen");
+            Server::builder(acceptor)
+                .serve(app(state).into_make_service())
+                .await.expect("Failed to listen")
+        }
+        _ => todo!("Finish checking schemes")
+    }
 }

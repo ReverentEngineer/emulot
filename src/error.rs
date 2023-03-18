@@ -3,6 +3,7 @@ use core::fmt;
 #[derive(Debug)]
 pub enum ErrorKind {
     IOError,
+    EncodingError,
     QMPError,
     AlreadyRunning,
     AlreadyStopped,
@@ -14,6 +15,7 @@ impl fmt::Display for ErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ErrorKind::IOError => write!(f, "Input/output error"),
+            ErrorKind::EncodingError => write!(f, "Encoding error"),
             ErrorKind::QMPError => write!(f, "QMP error"),
             ErrorKind::AlreadyRunning => write!(f, "Already running."),
             ErrorKind::AlreadyStopped => write!(f, "Already stopped."),
@@ -64,6 +66,22 @@ impl From<std::io::Error> for Error {
 impl From<serde_json::Error> for Error {
 
     fn from(error: serde_json::Error) -> Self {
+        Error::new(ErrorKind::IOError, format!("{error}"))
+    }
+
+}
+
+impl From<curl::Error> for Error {
+
+    fn from(error: curl::Error) -> Self {
+        Error::new(ErrorKind::IOError, format!("{error}"))
+    }
+
+}
+
+impl From<toml::de::Error> for Error {
+
+    fn from(error: toml::de::Error) -> Self {
         Error::new(ErrorKind::IOError, format!("{error}"))
     }
 
