@@ -24,3 +24,8 @@ pub async fn list(config: ClientConfig) -> Result<(), Error> {
     }
     Ok(())
 }
+
+pub async fn create(config: ClientConfig, guest: String, guest_config: GuestConfig) -> Result<(), Error> {
+    config.builder()?.endpoint(format!("/guests/create/{guest}"))?.post(Some(guest_config))?;
+    Ok(())
+}
