@@ -1,16 +1,19 @@
-use crate::Error;
+use crate::{
+    Error,
+    GuestConfig
+};
 
 mod config;
 pub use config::ClientConfig;
 
 
 pub async fn start(config: ClientConfig, guest: String) -> Result<(), Error> {
-    config.builder()?.endpoint(format!("/guests/start/{guest}"))?.post(None)?;
+    config.builder()?.endpoint(format!("/guests/start/{guest}"))?.post::<String>(None)?;
     Ok(())
 }
 
 pub async fn stop(config: ClientConfig, guest: String) -> Result<(), Error> {
-    config.builder()?.endpoint(format!("/guests/stop/{guest}"))?.post(None)?;
+    config.builder()?.endpoint(format!("/guests/stop/{guest}"))?.post::<String>(None)?;
     Ok(())
 }
 
