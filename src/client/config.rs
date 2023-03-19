@@ -85,14 +85,16 @@ impl<'a> RequestBuilder<'a, ReadyToSend> {
     }
 
     /// Performs a GET request
-    pub fn get(self) -> Result<String, Error> {
+    pub fn get<T>(self) -> Result<T, Error>
+    where
+        for<'de> T: Deserialize<'de>
+    {
         let mut easy = self.easy;
-        easy.post(true)?;
         easy.perform()?;
         let code = easy.response_code()?;
         let contents = String::from_utf8_lossy(&easy.get_ref().0).to_string();
         match code {
-            200 => Ok(contents),
+            200 => Ok(serde_json::from_slice(&easy.get_ref().0)?),
             404 => Err(Error::new(ErrorKind::NoSuchEntity, contents)),
             _ => Err(Error::new(ErrorKind::IOError, contents)),
         }
