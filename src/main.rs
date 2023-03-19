@@ -34,7 +34,17 @@ fn parse_config(filename: &str) -> Result<Config, io::Error> {
 }
 
 #[derive(Subcommand)]
-enum ClientCommand {
+enum Command {
+    Run {
+        /// Config to run
+        #[arg(value_parser = parse_guest_config)] 
+        config: GuestConfig,
+
+        /// Validate configo nly
+        #[arg(long, default_value = "false")]
+        validate: bool
+    },
+    Daemon,
     Start {
         /// Guest to start
         guest: String
@@ -52,25 +62,7 @@ enum ClientCommand {
         #[arg(value_parser = parse_guest_config)] 
         config: GuestConfig
     }
-}
 
-#[derive(Subcommand)]
-enum Command {
-    Run {
-        /// Config to run
-        #[arg(value_parser = parse_guest_config)] 
-        config: GuestConfig,
-
-        /// Validate configo nly
-        #[arg(long, default_value = "false")]
-        validate: bool
-    },
-    Daemon,
-    Client {
-        /// Client conmmands to a daemon
-        #[command(subcommand)]
-        command: ClientCommand
-    }
 }
 
 #[derive(Clone, Default, Deserialize)]
@@ -114,25 +106,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         },
         Command::Daemon => daemon::run(&config.daemon).await,
-        Command::Client { command } => {
-            match command {
-                ClientCommand::Start { guest } => {
-                    client::start(config.client, guest).await
-                        .unwrap()
-                },
-                ClientCommand::Stop { guest } => {
-                    client::stop(config.client, guest).await
-                        .unwrap()
-                },
-                ClientCommand::List => {
-                    client::list(config.client).await
-                        .unwrap()
-                },
-                ClientCommand::Create { guest, config: guest_config } => {
-                    client::create(config.client, guest, guest_config).await
-                        .unwrap()
-                }
-            }
+        Command::Start { guest } => {
+            client::start(config.client, guest).await
+                .unwrap()
+        },
+        Command::Stop { guest } => {
+            client::stop(config.client, guest).await
+                .unwrap()
+        },
+        Command::List => {
+            client::list(config.client).await
+                .unwrap()
+        },
+        Command::Create { guest, config: guest_config } => {
+            client::create(config.client, guest, guest_config).await
+                .unwrap()
         }
     }
     Ok(())
