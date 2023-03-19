@@ -121,6 +121,7 @@ impl<'a> ClientConfig {
 
     pub fn builder(&'a self) -> Result<RequestBuilder<'a, NeedsEndpoint>, Error> {
         let mut easy = Easy::new(Collector(Vec::new()));
+        easy.http_version(HttpVersion::V2PriorKnowledge)?;
         if std::env::var_os("EMULOT_CURL_VERBOSE").is_some() {
             easy.verbose(true)?;
         }
