@@ -10,7 +10,7 @@ readme = "README.md"
 keywords = ["emulation", "management", "QEMU"]
 
 [dependencies]
-axum = { version = "0.6.10", features = ["macros"] }
+axum = { version = "0.6.10", features = ["macros", "http2"] }
 chashmap = "2.2.2"
 clap = { version = "4.1.8", features = ["derive"] }
 curl = "0.4.44"
