@@ -43,7 +43,15 @@ enum ClientCommand {
         /// Guest to start
         guest: String
     },
-    List
+    List,
+    Create {
+        /// Guest name
+        guest: String,
+
+        /// Config to use
+        #[arg(value_parser = parse_guest_config)] 
+        config: GuestConfig
+    }
 }
 
 #[derive(Subcommand)]
@@ -118,6 +126,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 },
                 ClientCommand::List => {
                     client::list(config.client).await
+                        .unwrap()
+                },
+                ClientCommand::Create { guest, config: guest_config } => {
+                    client::create(config.client, guest, guest_config).await
                         .unwrap()
                 }
             }
