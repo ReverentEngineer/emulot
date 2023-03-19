@@ -42,7 +42,8 @@ enum ClientCommand {
     Stop {
         /// Guest to start
         guest: String
-    }
+    },
+    List
 }
 
 #[derive(Subcommand)]
@@ -113,6 +114,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 },
                 ClientCommand::Stop { guest } => {
                     client::stop(config.client, guest).await
+                        .unwrap()
+                },
+                ClientCommand::List => {
+                    client::list(config.client).await
                         .unwrap()
                 }
             }
