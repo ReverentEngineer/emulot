@@ -2,9 +2,14 @@ use core::marker::PhantomData;
 use curl::easy::{
     Easy2 as Easy,
     Handler,
-    WriteError
+    List,
+    WriteError,
+    HttpVersion
 };
-use serde::Deserialize;
+use serde::{
+    Deserialize,
+    Serialize
+};
 use url::Url;
 use crate::{
     Error,
@@ -71,8 +76,18 @@ impl<'a> RequestBuilder<'a, NeedsEndpoint> {
 impl<'a> RequestBuilder<'a, ReadyToSend> {
 
     /// Performs a POST request
-    pub fn post(self, _data: Option<&[u8]>) -> Result<(), Error> {
+    pub fn post<T>(self, data: Option<T>) -> Result<(), Error>
+    where
+        T: Serialize
+    {
         let mut easy = self.easy;
+        let mut headers = List::new();
+        if let Some(data) = data {
+            let data = serde_json::to_vec(&data)?;
+            easy.post_fields_copy(&data)?;
+            headers.append("Content-Type: application/json")?;
+        }
+        easy.http_headers(headers)?;
         easy.post(true)?;
         easy.perform()?;
         let code = easy.response_code()?;
