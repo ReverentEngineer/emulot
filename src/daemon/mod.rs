@@ -74,8 +74,8 @@ fn app(state: State) -> Router {
         .layer(Extension(state))
 }
 
-pub async fn run(config: &DaemonConfig) {
-    let config_storage = Arc::new(ConfigStorage::new(&config.url).await.expect("This shouldn't happen yet."));
+pub async fn run(config: &DaemonConfig) -> Result<(), Error> {
+    let config_storage = Arc::new(ConfigStorage::new(&config.url).await?);
     let state = State {
         storage: config_storage.clone(),
         orchestrator: Orchestrator::new(config_storage).into()
@@ -87,7 +87,9 @@ pub async fn run(config: &DaemonConfig) {
             if let Some(addr) = format!("{host}:{port}").to_socket_addrs().unwrap().next() {
                 Server::bind(&addr)
                     .serve(app(state).into_make_service())
-                   .await.expect("Failed to listen");
+                    .await.map_err(|err| err.into())
+            } else {
+                todo!()
             }
         },
         "unix" => {
@@ -98,7 +100,7 @@ pub async fn run(config: &DaemonConfig) {
             let acceptor = unix::UnixAcceptor::bind(path).expect("Failed to listen");
             Server::builder(acceptor)
                 .serve(app(state).into_make_service())
-                .await.expect("Failed to listen")
+                .await.map_err(|err| err.into())
         }
         _ => todo!("Finish checking schemes")
     }

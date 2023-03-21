@@ -4,6 +4,7 @@ use core::fmt;
 pub enum ErrorKind {
     IOError,
     EncodingError,
+    DaemonError,
     QMPError,
     AlreadyRunning,
     AlreadyStopped,
@@ -16,6 +17,7 @@ impl fmt::Display for ErrorKind {
         match self {
             ErrorKind::IOError => write!(f, "Input/output error"),
             ErrorKind::EncodingError => write!(f, "Encoding error"),
+            ErrorKind::DaemonError => write!(f, "Daemon error"),
             ErrorKind::QMPError => write!(f, "QMP error"),
             ErrorKind::AlreadyRunning => write!(f, "Already running."),
             ErrorKind::AlreadyStopped => write!(f, "Already stopped."),
@@ -83,6 +85,14 @@ impl From<toml::de::Error> for Error {
 
     fn from(error: toml::de::Error) -> Self {
         Error::new(ErrorKind::IOError, format!("{error}"))
+    }
+
+}
+
+impl From<hyper::Error> for Error {
+
+    fn from(error: hyper::Error) -> Self {
+        Error::new(ErrorKind::DaemonError, format!("{error}"))
     }
 
 }

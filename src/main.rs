@@ -105,7 +105,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 guest.wait().await.unwrap();
             }
         },
-        Command::Daemon => daemon::run(&config.daemon).await,
+        Command::Daemon => daemon::run(&config.daemon).await.unwrap(),
         Command::Start { guest } => {
             client::start(config.client, guest).await
                 .unwrap()
