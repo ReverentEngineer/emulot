@@ -25,9 +25,9 @@ pub fn router() -> Router
 
 async fn list(
     state: Extension<State>
-    ) -> Result<Json<Vec<Labeled<GuestConfig>>>, Error>
+    ) -> Result<Json<Vec<Labeled<isize>>>, Error>
 {
-    Ok(Json(state.storage.list(None, None).await?))
+    Ok(Json(state.storage.list(None, None)?))
 }
 
 async fn create(
@@ -36,23 +36,23 @@ async fn create(
     Json(config): Json<GuestConfig>
     ) -> Result<StatusCode, Error>
 {
-    state.storage.insert(&name, config).await?;
+    state.storage.insert(&name, config)?;
     Ok(StatusCode::OK)
 }
 
 async fn remove(
-    Path(name): Path<String>,
+    Path(id): Path<isize>,
     state: Extension<State>) -> Result<StatusCode, Error>
 {
-    state.storage.remove(&name).await?;
+    state.storage.remove(id)?;
     Ok(StatusCode::OK)
 }
 
 async fn run(
-    Path(name): Path<String>,
+    Path(id): Path<usize>,
     state: Extension<State>) -> Result<StatusCode, Error>
 {
-    state.orchestrator.run(&name).await?;
+    state.orchestrator.run(id).await?;
     Ok(StatusCode::OK)
 }
 
