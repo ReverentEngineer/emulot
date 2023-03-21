@@ -93,35 +93,39 @@ struct Args {
 
 }
 
+async fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
+    if !validate {
+        let mut guest: Guest = config.into();
+        guest.run().await?;
+        guest.wait().await?;
+        Ok(())
+    } else {
+        Ok(())
+    }
+}
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let config = args.config.unwrap_or_default();
     match args.command {
-        Command::Run { config, validate } => {
-            if !validate {
-                let mut guest: Guest = config.into();
-                guest.run().await.unwrap();
-                guest.wait().await.unwrap();
-            }
-        },
-        Command::Daemon => daemon::run(&config.daemon).await.unwrap(),
+        Command::Run { config, validate } => run(config, validate).await,
+        Command::Daemon => daemon::run(&config.daemon).await,
         Command::Start { guest } => {
             client::start(config.client, guest).await
-                .unwrap()
         },
         Command::Stop { guest } => {
             client::stop(config.client, guest).await
-                .unwrap()
         },
         Command::List => {
             client::list(config.client).await
-                .unwrap()
         },
         Command::Create { guest, config: guest_config } => {
             client::create(config.client, guest, guest_config).await
-                .unwrap()
         }
-    }
+    }.unwrap_or_else(|err| {
+        eprintln!("{err}");
+        std::process::exit(-1);
+    });
     Ok(())
 }
