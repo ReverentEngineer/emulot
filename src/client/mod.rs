@@ -5,7 +5,7 @@ use crate::{
 
 mod config;
 pub use config::ClientConfig;
-
+use crate::storage::Labeled;
 
 pub async fn start(config: ClientConfig, guest: String) -> Result<(), Error> {
     config.builder()?.endpoint(format!("/guests/start/{guest}"))?.post::<String>(None)?;
@@ -18,9 +18,9 @@ pub async fn stop(config: ClientConfig, guest: String) -> Result<(), Error> {
 }
 
 pub async fn list(config: ClientConfig) -> Result<(), Error> {
-    let guests: Vec<String> = config.builder()?.endpoint(format!("/guests/list"))?.get()?;
+    let guests: Vec<Labeled<isize>> = config.builder()?.endpoint(format!("/guests/list"))?.get()?;
     for guest in guests {
-        println!("{guest}");
+        println!("{0}", guest.label());
     }
     Ok(())
 }

@@ -5,6 +5,7 @@ pub enum ErrorKind {
     IOError,
     EncodingError,
     DaemonError,
+    StorageError,
     QMPError,
     AlreadyRunning,
     AlreadyStopped,
@@ -18,6 +19,7 @@ impl fmt::Display for ErrorKind {
             ErrorKind::IOError => write!(f, "Input/output error"),
             ErrorKind::EncodingError => write!(f, "Encoding error"),
             ErrorKind::DaemonError => write!(f, "Daemon error"),
+            ErrorKind::StorageError => write!(f, "Storage error"),
             ErrorKind::QMPError => write!(f, "QMP error"),
             ErrorKind::AlreadyRunning => write!(f, "Already running."),
             ErrorKind::AlreadyStopped => write!(f, "Already stopped."),
@@ -50,9 +52,9 @@ impl Error {
 }
 
 impl fmt::Display for Error {
-    
+
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{0}: {1}", self.kind, self.message)
+        write!(f, "{0}", self.message)
     }
 
 }
@@ -93,6 +95,26 @@ impl From<hyper::Error> for Error {
 
     fn from(error: hyper::Error) -> Self {
         Error::new(ErrorKind::DaemonError, format!("{error}"))
+    }
+
+}
+
+const SQLITE_CONSTRAINT_UNIQUE: i32 = 2067;
+
+impl From<rusqlite::Error> for Error {
+
+    fn from(error: rusqlite::Error) -> Self {
+        match error {
+            rusqlite::Error::SqliteFailure(kind, message) => {
+                match kind {
+                    kind if kind.extended_code == SQLITE_CONSTRAINT_UNIQUE => {
+                        Error::new(ErrorKind::AlreadyExists, format!("{}", message.unwrap()))
+                    },
+                    _ => Error::new(ErrorKind::StorageError, format!("{}", message.unwrap()))
+                }
+            },
+            _ => Error::new(ErrorKind::StorageError, format!("{error}"))
+        }
     }
 
 }

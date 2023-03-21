@@ -95,6 +95,7 @@ impl<'a> RequestBuilder<'a, ReadyToSend> {
         match code {
             200 => Ok(()),
             404 => Err(Error::new(ErrorKind::NoSuchEntity, contents)),
+            409 => Err(Error::new(ErrorKind::AlreadyExists, contents)),
             _ => Err(Error::new(ErrorKind::IOError, contents)),
         }
     }
@@ -111,6 +112,7 @@ impl<'a> RequestBuilder<'a, ReadyToSend> {
         match code {
             200 => Ok(serde_json::from_slice(&easy.get_ref().0)?),
             404 => Err(Error::new(ErrorKind::NoSuchEntity, contents)),
+            409 => Err(Error::new(ErrorKind::AlreadyExists, contents)),
             _ => Err(Error::new(ErrorKind::IOError, contents)),
         }
     }

@@ -53,8 +53,12 @@ pub struct DaemonConfig {
     listen: Url,
 
     /// Database url
-    url: String
+    uri: String
 
+}
+
+fn default_storage_uri() -> String {
+    format!("{}/storage.db", crate::runtime_dir())
 }
 
 impl Default for DaemonConfig {
@@ -62,7 +66,7 @@ impl Default for DaemonConfig {
     fn default() -> Self {
         Self {
             listen: crate::default_url(),
-            url: String::new()
+            uri: default_storage_uri()
         }
     }
 
@@ -75,7 +79,7 @@ fn app(state: State) -> Router {
 }
 
 pub async fn run(config: &DaemonConfig) -> Result<(), Error> {
-    let config_storage = Arc::new(ConfigStorage::new(&config.url).await?);
+    let config_storage = Arc::new(ConfigStorage::new(&config.uri)?);
     let state = State {
         storage: config_storage.clone(),
         orchestrator: Orchestrator::new(config_storage).into()
