@@ -41,6 +41,7 @@ impl<T> Labeled<T> {
         &self.label
     }
 
+    #[allow(unused)]
     pub fn item(&self) -> &T {
         &self.item
     }

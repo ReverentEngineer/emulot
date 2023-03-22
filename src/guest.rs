@@ -116,6 +116,7 @@ impl Guest {
         }
     }
 
+    #[allow(unused)]
     pub async fn kill(&mut self) -> Result<(), Error> {
         self.process
             .take()
