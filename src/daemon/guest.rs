@@ -17,10 +17,11 @@ pub fn router() -> Router
 {
         Router::new()
             .route("/create/:name", post(create))
-            .route("/remove/:name", delete(remove))
+            .route("/remove/:id", delete(remove))
             .route("/list", get(list))
-            .route("/start/:name", post(run))
-            .route("/shutdown/:name", post(shutdown))
+            .route("/lookup/:name", get(lookup))
+            .route("/start/:id", post(run))
+            .route("/shutdown/:id", post(shutdown))
 }
 
 async fn list(
@@ -28,6 +29,14 @@ async fn list(
     ) -> Result<Json<Vec<Labeled<isize>>>, Error>
 {
     Ok(Json(state.storage.list(None, None)?))
+}
+
+async fn lookup(
+    Path(name): Path<String>,
+    state: Extension<State>
+    ) -> Result<Json<isize>, Error>
+{
+    Ok(Json(state.storage.lookup_id(&name)?))
 }
 
 async fn create(
