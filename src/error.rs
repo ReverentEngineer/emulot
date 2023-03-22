@@ -113,6 +113,8 @@ impl From<rusqlite::Error> for Error {
                     _ => Error::new(ErrorKind::StorageError, format!("{}", message.unwrap()))
                 }
             },
+            rusqlite::Error::QueryReturnedNoRows =>
+                Error::new(ErrorKind::NoSuchEntity, format!("{error}")),
             _ => Error::new(ErrorKind::StorageError, format!("{error}"))
         }
     }

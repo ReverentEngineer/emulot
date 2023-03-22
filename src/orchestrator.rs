@@ -30,10 +30,9 @@ impl Orchestrator {
     pub async fn run(&self, id: usize) -> Result<(), Error> {
         let mut guest = self.guests.get(&id.to_string());
         if guest.is_none() {
-            if let Some(config) = self.storage.get(id)? {
-                self.guests.insert(id.to_string(), Arc::new(Mutex::new(config.into()))); 
-                guest = self.guests.get(&id.to_string());
-            }
+            let config = self.storage.get(id)?;
+            self.guests.insert(id.to_string(), Arc::new(Mutex::new(config.into())));
+            guest = self.guests.get(&id.to_string());
         }
 
         if let Some(guest) = guest {

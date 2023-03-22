@@ -121,15 +121,20 @@ impl ConfigStorage {
         })
     }
 
-    pub fn get(&self, id: usize) -> Result<Option<GuestConfig>, Error> {
+    /// Lookup ID of a guest name
+    pub fn lookup_id(&self, name: &str) -> Result<isize, Error> {
         let connection = Connection::open(&self.uri)?;
-        match connection.query_row("SELECT config FROM guest WHERE id = ?", [id], |row| {
+        connection.query_row("SELECT id FROM guest WHERE name = ?", [name], |row| {
+            Ok(row.get::<usize, isize>(0)?)
+        }).map_err(|err| err.into())
+    }
+
+    pub fn get(&self, id: usize) -> Result<GuestConfig, Error> {
+        let connection = Connection::open(&self.uri)?;
+        connection.query_row("SELECT config FROM guest WHERE id = ?", [id], |row| {
             Ok(row.get::<usize, String>(0)?)
-        }) {
-            Ok(config) => Ok(serde_json::from_str(&config)?),
-            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(err) => Err(err.into())
-        }
+        }).map_err(|err| err.into())
+        .and_then(|config| serde_json::from_str(&config).map_err(|err| err.into()))
     }
 
     pub fn list(&self, offset: Option<isize>, limit: Option<isize>)
