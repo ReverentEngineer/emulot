@@ -19,7 +19,7 @@ pub fn router() -> Router
             .route("/create/:name", post(create))
             .route("/remove/:name", delete(remove))
             .route("/list", get(list))
-            .route("/run/:name", post(run))
+            .route("/start/:name", post(run))
             .route("/shutdown/:name", post(shutdown))
 }
 

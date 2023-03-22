@@ -13,7 +13,7 @@ pub async fn start(config: ClientConfig, guest: String) -> Result<(), Error> {
 }
 
 pub async fn stop(config: ClientConfig, guest: String) -> Result<(), Error> {
-    config.builder()?.endpoint(format!("/guests/stop/{guest}"))?.post::<String>(None)?;
+    config.builder()?.endpoint(format!("/guests/shutdown/{guest}"))?.post::<String>(None)?;
     Ok(())
 }
 
