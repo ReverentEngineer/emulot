@@ -11,6 +11,7 @@ pub enum ErrorKind {
     AlreadyStopped,
     AlreadyExists,
     NoSuchEntity,
+    Pending
 }
 
 impl fmt::Display for ErrorKind {
@@ -24,8 +25,8 @@ impl fmt::Display for ErrorKind {
             ErrorKind::AlreadyRunning => write!(f, "Already running."),
             ErrorKind::AlreadyStopped => write!(f, "Already stopped."),
             ErrorKind::AlreadyExists => write!(f, "Already exists"),
-            ErrorKind::NoSuchEntity => write!(f, "No such entity")
-
+            ErrorKind::NoSuchEntity => write!(f, "No such entity"),
+            ErrorKind::Pending => write!(f, "Pending")
         }
     }
 }

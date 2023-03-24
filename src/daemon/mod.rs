@@ -5,9 +5,11 @@ use std::{
 use serde::Deserialize;
 use axum::{
     Extension,
+    Json,
     Router,
+    routing::get,
     Server,
-    http::StatusCode
+    http::StatusCode,
 };
 use crate::{
     Error,
@@ -26,6 +28,7 @@ impl axum::response::IntoResponse for Error {
             ErrorKind::AlreadyStopped => StatusCode::NOT_MODIFIED,
             ErrorKind::AlreadyExists => StatusCode::CONFLICT,
             ErrorKind::NoSuchEntity => StatusCode::NOT_FOUND,
+            ErrorKind::Pending => StatusCode::SERVICE_UNAVAILABLE,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
         (status_code, format!("{self}")).into_response()
@@ -72,8 +75,20 @@ impl Default for DaemonConfig {
 
 }
 
+async fn health(
+    state: Extension<State>
+    ) -> Result<Json<String>, Error>
+{
+    let text = match state.storage.list(None, None).is_ok() {
+       true => "Ready".to_string(),
+       false => return Err(Error::new(ErrorKind::Pending, "Unable to access database"))
+    };
+    Ok(Json(text))
+}
+
 fn app(state: State) -> Router {
     Router::new()
+        .route("/health", get(health))
         .nest("/guests", guest::router())
         .layer(Extension(state))
 }
