@@ -79,15 +79,21 @@ fn app(state: State) -> Router {
 }
 
 pub async fn run(config: &DaemonConfig) -> Result<(), Error> {
-    let config_storage = Arc::new(ConfigStorage::new(&config.uri)?);
+    let storage_uri = std::env::var("EMULOT_STORAGE_URI").ok()
+        .unwrap_or(config.uri.clone());
+    let config_storage = Arc::new(ConfigStorage::new(storage_uri)?);
     let state = State {
         storage: config_storage.clone(),
         orchestrator: Orchestrator::new(config_storage).into()
     };
-    match config.listen.scheme() {
+
+    let listen = std::env::var("EMULOT_LISTEN").ok()
+        .and_then(|listen| Url::parse(&listen).ok())
+        .unwrap_or(config.listen.clone());
+    match listen.scheme() {
         "tcp" => {
-            let host = config.listen.host_str().unwrap();
-            let port = config.listen.port().unwrap();
+            let host = listen.host_str().unwrap();
+            let port = listen.port().unwrap();
             if let Some(addr) = format!("{host}:{port}").to_socket_addrs().unwrap().next() {
                 Server::bind(&addr)
                     .serve(app(state).into_make_service())
@@ -97,11 +103,11 @@ pub async fn run(config: &DaemonConfig) -> Result<(), Error> {
             }
         },
         "unix" => {
-            let path = crate::de::percent_decode(config.listen.path()).expect("Failed to decode");
+            let path = crate::de::percent_decode(listen.path()).expect("Failed to decode");
             if std::fs::metadata(&path).is_ok() {
                 let _ = std::fs::remove_file(&path).expect("Failed to remove");
             }
-            let acceptor = unix::UnixAcceptor::bind(path).expect("Failed to listen");
+            let acceptor = unix::UnixAcceptor::bind(&path).expect("Failed to listen");
             Server::builder(acceptor)
                 .serve(app(state).into_make_service())
                 .await.map_err(|err| err.into())

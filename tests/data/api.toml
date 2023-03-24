@@ -1,0 +1,54 @@
+[[tests]]
+name = "List empty"
+
+[tests.request]
+method = "GET"
+url = "/guests/list"
+
+[tests.response]
+code = 200
+contents = "[]"
+
+[[tests]]
+name = "Add"
+
+[tests.request]
+method = "POST"
+headers = ["Content-Type: application/json"]
+url = "/guests/create/guest_a"
+contents = "{ \"arch\": \"i386\", \"memory\": 512}" 
+
+[tests.response]
+code = 200
+
+[[tests]]
+name = "List with one"
+
+[tests.request]
+method = "GET"
+url = "/guests/list"
+
+[tests.response]
+code = 200
+contents = "[{\"guest_a\":1}]"
+
+[[tests]]
+name = "Remove"
+
+[tests.request]
+method = "DELETE"
+url = "/guests/remove/1"
+
+[tests.response]
+code = 200
+
+[[tests]]
+name = "List empty after remove"
+
+[tests.request]
+method = "GET"
+url = "/guests/list"
+
+[tests.response]
+code = 200
+contents = "[]"
