@@ -1,5 +1,5 @@
-use std::process::Command;
 use std::time::Duration;
+use std::process::{Command, Child};
 use serde::Deserialize;
 use curl::easy::{Easy2 as Easy, Handler, List, WriteError};
 
@@ -14,6 +14,16 @@ fn validate_guest_config_toml() {
         .output()
         .unwrap();
     assert!(output.status.success())
+}
+
+struct ChildGuard(Child);
+
+impl Drop for ChildGuard {
+
+    fn drop(&mut self) {
+        let _ = self.0.kill();
+    }
+
 }
 
 #[derive(Deserialize)]
@@ -100,12 +110,12 @@ fn daemon_api() {
     let config_data = std::fs::read_to_string(format!("{manifest_dir}/tests/data/api.toml")).unwrap();
 
     let bin = env!("CARGO_BIN_EXE_emulot");
-    let mut _child = Command::new(format!("{bin}"))
+    let _child = ChildGuard(Command::new(format!("{bin}"))
         .arg("daemon")
         .env("EMULOT_LISTEN", format!("unix://{}", test_socket()))
         .env("EMULOT_STORAGE_URI", testdb())
         .spawn()
-        .unwrap();
+        .unwrap());
 
     std::thread::sleep(Duration::from_millis(300));
 
