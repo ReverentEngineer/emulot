@@ -1,4 +1,3 @@
-use std::time::Duration;
 use std::process::{Command, Child};
 use serde::Deserialize;
 use curl::easy::{Easy2 as Easy, Handler, List, WriteError};
@@ -101,6 +100,15 @@ struct ApiTests {
     tests: Vec<ApiTest>
 }
 
+fn wait_for_daemon() {
+    let mut easy = Easy::new(Collector(Vec::new()));
+    easy.url("http://localhost/health").unwrap();
+    easy.unix_socket(&test_socket()).unwrap();
+    println!("Check fpr daemon!!");
+    while easy.perform().is_err() {
+    }
+}
+
 #[test]
 fn daemon_api() {
     if std::fs::metadata(testdb()).is_ok() {
@@ -117,7 +125,7 @@ fn daemon_api() {
         .spawn()
         .unwrap());
 
-    std::thread::sleep(Duration::from_millis(300));
+    wait_for_daemon();
 
     let config: ApiTests = toml::from_str(&config_data).unwrap();
     for ApiTest { name, request, response } in config.tests {
