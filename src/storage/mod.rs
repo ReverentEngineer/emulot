@@ -112,7 +112,8 @@ impl ConfigStorage {
 
     /// Create storage backed by path
     pub fn new<S: AsRef<str>>(path: S) -> Result<Self, Error> {
-        let connection = Connection::open_with_flags(path.as_ref(), OpenFlags::SQLITE_OPEN_URI | OpenFlags::SQLITE_OPEN_READ_WRITE)?;
+        let connection = Connection::open_with_flags(path.as_ref(), 
+            OpenFlags::SQLITE_OPEN_URI | OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE)?;
         let _ = connection.execute("CREATE TABLE IF NOT EXISTS guest (
             id INTEGER PRIMARY KEY,
             name VARCHAR NOT NULL,
