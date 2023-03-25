@@ -37,6 +37,7 @@ fn parse_config(filename: &str) -> Result<Config, io::Error> {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Run a guest config in the foreground
     Run {
         /// Config to run
         #[arg(value_parser = parse_guest_config)] 
@@ -46,16 +47,21 @@ enum Command {
         #[arg(long, default_value = "false")]
         validate: bool
     },
+    /// Start a guest daemon
     Daemon,
+    /// Start an exisitng guest
     Start {
         /// Guest to start
         guest: String
     },
+    /// Stop an existing guest
     Stop {
         /// Guest to start
         guest: String
     },
+    /// List the names of all guest configurations
     List,
+    /// Create a new guest configuration
     Create {
         /// Guest name
         guest: String,
