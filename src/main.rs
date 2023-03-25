@@ -63,8 +63,13 @@ enum Command {
         /// Config to use
         #[arg(value_parser = parse_guest_config)] 
         config: Option<GuestConfig>,
+    },
+    /// Removes a guest
+    #[command(id = "rm")]
+    Remove {
+        /// Guest name
+        guest: String
     }
-
 }
 
 #[derive(Clone, Default, Deserialize)]
@@ -134,6 +139,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Command::Create { guest, config: guest_config } => 
             guest_config.try_into()
                 .and_then(|gc| client::create(config.client, guest, gc)),
+        Command::Remove { guest } => client::remove(config.client, guest)
     }.unwrap_or_else(|err| {
         eprintln!("{err}");
         std::process::exit(-1);

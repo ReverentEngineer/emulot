@@ -17,6 +17,13 @@ pub fn stop(config: ClientConfig, guest: String) -> Result<(), Error> {
     Ok(())
 }
 
+
+fn lookup_id(config: &ClientConfig, guest: String) -> Result<isize, Error> {
+    config.builder()?
+        .endpoint(format!("/guests/lookup/{guest}"))?
+        .get()
+}
+
 pub fn list(config: ClientConfig) -> Result<(), Error> {
     let guests: Vec<Labeled<isize>> = config.builder()?.endpoint(format!("/guests/list"))?.get()?;
     for guest in guests {
@@ -28,4 +35,9 @@ pub fn list(config: ClientConfig) -> Result<(), Error> {
 pub fn create(config: ClientConfig, guest: String, guest_config: GuestConfig) -> Result<(), Error> {
     config.builder()?.endpoint(format!("/guests/create/{guest}"))?.post(Some(guest_config))?;
     Ok(())
+}
+
+pub fn remove(config: ClientConfig, guest: String) -> Result<(), Error> {
+    lookup_id(&config, guest)
+        .and_then(|id| config.builder()?.endpoint(format!("/guests/remove/{id}"))?.delete())
 }
