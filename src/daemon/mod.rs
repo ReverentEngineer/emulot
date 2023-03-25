@@ -93,6 +93,7 @@ fn app(state: State) -> Router {
         .layer(Extension(state))
 }
 
+#[tokio::main(flavor = "current_thread")]
 pub async fn run(config: &DaemonConfig) -> Result<(), Error> {
     let storage_uri = std::env::var("EMULOT_STORAGE_URI").ok()
         .unwrap_or(config.uri.clone());
