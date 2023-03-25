@@ -94,6 +94,7 @@ struct Args {
 
 }
 
+#[tokio::main(flavor = "current_thread")]
 async fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
     if !validate {
         let mut guest: Guest = config.into();
@@ -105,25 +106,17 @@ async fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
     }
 }
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let config = args.config.unwrap_or_default();
     match args.command {
-        Command::Run { config, validate } => run(config, validate).await,
-        Command::Daemon => daemon::run(&config.daemon).await,
-        Command::Start { guest } => {
-            client::start(config.client, guest).await
-        },
-        Command::Stop { guest } => {
-            client::stop(config.client, guest).await
-        },
-        Command::List => {
-            client::list(config.client).await
-        },
-        Command::Create { guest, config: guest_config } => {
-            client::create(config.client, guest, guest_config).await
-        }
+        Command::Run { config, validate } => run(config, validate),
+        Command::Daemon => daemon::run(&config.daemon),
+        Command::Start { guest } => client::start(config.client, guest),
+        Command::Stop { guest } => client::stop(config.client, guest),
+        Command::List => client::list(config.client),
+        Command::Create { guest, config: guest_config } => 
+            client::create(config.client, guest, guest_config),
     }.unwrap_or_else(|err| {
         eprintln!("{err}");
         std::process::exit(-1);
