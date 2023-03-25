@@ -89,6 +89,18 @@ fn runtime_dir() -> String {
     format!("{}/Library/Application Support/emulot", env!("HOME"))
 }
 
+#[cfg(target_os = "linux")]
+#[link(name = "c")]
+extern "C" {
+    fn geteuid() -> u32;
+}
+
+
+#[cfg(target_os = "linux")]
+fn runtime_dir() -> String {
+    format!("/run/user/{}", unsafe { geteuid() })
+}
+
 fn default_url() -> url::Url {
     url::Url::parse(&format!("unix://{}/daemon.sock", runtime_dir()))
         .expect("There was an issue with the default daemon URL")
