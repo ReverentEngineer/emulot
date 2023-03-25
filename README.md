@@ -4,6 +4,8 @@ A configuration manager for QEMU
 
 Detailed documentation can be found [here](https://jeff.caffreyhill.com/emulot).
 
+The current version only supports Mac OS X and Linux hosts.
+
 # Example config
 
 ```toml
