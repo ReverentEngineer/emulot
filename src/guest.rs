@@ -132,14 +132,6 @@ impl Guest {
         Ok(())
     }
 
-    pub async fn wait(&mut self) -> Result<std::process::ExitStatus, Error> {
-        if let Some(ref mut process) = &mut self.process {
-            Ok(process.wait().await?)
-        } else {
-            Err(Error::new(ErrorKind::AlreadyStopped, format!("Already stopped")))
-        }
-    }
-
     pub fn status(&mut self) -> Result<Status, Error> {
         match &mut self.process {
             Some(process) => {
