@@ -44,6 +44,9 @@ pub struct GuestConfig {
     smp: Option<SmpConfig>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    bios: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     accel: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     machine: Option<MachineConfig>,
@@ -65,6 +68,7 @@ impl GuestConfig {
             boot: None,
             cpu: None,
             smp: None,
+            bios: None,
             accel: None,
             machine: None,
             display: "none".to_string(),
@@ -81,6 +85,10 @@ impl GuestConfig {
 
         if let Some(accel) = &self.accel {
             command.arg("-accel").arg(accel);
+        }
+
+        if let Some(bios) = &self.bios {
+            command.arg("-bios").arg(bios);
         }
 
         self.machine.fmt_args(&mut command);
