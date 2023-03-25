@@ -2,6 +2,8 @@
 
 A configuration manager for QEMU
 
+Detailed documentation can be found [here](https://jeff.caffreyhill.com/emulot).
+
 # Example config
 
 ```toml
