@@ -1,0 +1,5 @@
+[book]
+authors = ["Jeff Caffrey-Hill <jeff@caffreyhill.com>"]
+language = "en"
+multilingual = false
+src = "src"
