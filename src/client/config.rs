@@ -117,6 +117,25 @@ impl<'a> RequestBuilder<'a, ReadyToSend> {
         }
     }
 
+    /// Performs a DELETE request
+    pub fn delete(self) -> Result<(), Error>
+    {
+        let mut easy = self.easy;
+        easy.custom_request("DELETE")?;
+        easy.perform()?;
+        let code = easy.response_code()?;
+        let contents = String::from_utf8_lossy(&easy.get_ref().0).to_string();
+        match code {
+            200 => Ok(()),
+            404 => Err(Error::new(ErrorKind::NoSuchEntity, contents)),
+            409 => Err(Error::new(ErrorKind::AlreadyExists, contents)),
+            _ => Err(Error::new(ErrorKind::IOError, contents)),
+        }
+    }
+
+
+
+
 }
 
 impl<'a> ClientConfig {
