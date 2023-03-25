@@ -1,4 +1,4 @@
-use std::process::{Command, Child};
+use std::process::{Command, Child, Stdio};
 use serde::Deserialize;
 use curl::easy::{Easy2 as Easy, Handler, List, WriteError};
 
@@ -141,4 +141,23 @@ fn daemon_api() {
             assert_eq!(contents.as_bytes(), easy.get_ref().0, "'{name}' test had in correct response contents"); 
         }
     }
+}
+
+#[test]
+fn curl() {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let curl = Command::new("curl")
+        .arg(format!("file://{manifest_dir}/tests/data/test.toml"))
+        .stderr(Stdio::null())
+        .stdout(Stdio::piped())
+        .spawn().unwrap();
+    
+    let bin = env!("CARGO_BIN_EXE_emulot");
+    let emulot = Command::new(format!("{bin}"))
+        .arg("run")
+        .arg("--validate")
+        .stdin(curl.stdout.unwrap())
+        .output()
+        .unwrap();
+    assert!(emulot.status.success(), "Emulot failed to validate config");
 }
