@@ -50,6 +50,7 @@ impl Guest {
             let mut command = Into::<tokio::process::Command>::into(self.config.as_cmd()); 
             command.stdin(Stdio::piped())
                 .stdout(Stdio::piped());
+
             let mut child = command.spawn()?;
             if let Some(reader) = child.stdout.take() {
                 let mut reader = BufReader::new(reader);

@@ -1,5 +1,6 @@
 #![feature(type_name_of_val)]
 use std::io;
+use std::io::Read;
 use clap::{
     Parser,
     Subcommand,
@@ -39,7 +40,7 @@ enum Command {
     Run {
         /// Config to run
         #[arg(value_parser = parse_guest_config)] 
-        config: GuestConfig,
+        config: Option<GuestConfig>,
 
         /// Validate configo nly
         #[arg(long, default_value = "false")]
@@ -61,7 +62,7 @@ enum Command {
 
         /// Config to use
         #[arg(value_parser = parse_guest_config)] 
-        config: GuestConfig
+        config: Option<GuestConfig>,
     }
 
 }
@@ -106,17 +107,33 @@ async fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
     }
 }
 
+impl TryFrom<Option<GuestConfig>> for GuestConfig {
+    type Error = Error;
+
+    fn try_from(config: Option<GuestConfig>) -> Result<Self, Self::Error> {
+        if let Some(config) = config {
+            Ok(config)
+        } else {
+            let mut buf = String::new();
+            std::io::stdin().read_to_string(&mut buf)?;
+            toml::from_str(&buf).map_err(|err| err.into())
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let config = args.config.unwrap_or_default();
     match args.command {
-        Command::Run { config, validate } => run(config, validate),
+        Command::Run { config, validate } => config.try_into()
+            .and_then(|config| run(config, validate)),
         Command::Daemon => daemon::run(&config.daemon),
         Command::Start { guest } => client::start(config.client, guest),
         Command::Stop { guest } => client::stop(config.client, guest),
         Command::List => client::list(config.client),
         Command::Create { guest, config: guest_config } => 
-            client::create(config.client, guest, guest_config),
+            guest_config.try_into()
+                .and_then(|gc| client::create(config.client, guest, gc)),
     }.unwrap_or_else(|err| {
         eprintln!("{err}");
         std::process::exit(-1);
