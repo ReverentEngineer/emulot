@@ -1,4 +1,3 @@
-#![feature(type_name_of_val)]
 use std::io;
 use std::io::Read;
 use std::process::Stdio;
