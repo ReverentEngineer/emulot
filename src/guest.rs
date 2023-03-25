@@ -47,10 +47,12 @@ impl Guest {
 
     pub async fn run(&mut self) -> Result<(), Error> {
         if self.status()? != Status::Running {
-            let mut command = Into::<tokio::process::Command>::into(self.config.as_cmd()); 
+            let mut command = self.config.as_cmd();
+            // Allow for controlling via QMP through stdio
+            command.args(["-chardev", "stdio,id=mon0", "-mon", "chardev=mon0,mode=control"]);
+            let mut command = Into::<tokio::process::Command>::into(command); 
             command.stdin(Stdio::piped())
                 .stdout(Stdio::piped());
-
             let mut child = command.spawn()?;
             if let Some(reader) = child.stdout.take() {
                 let mut reader = BufReader::new(reader);

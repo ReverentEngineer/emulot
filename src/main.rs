@@ -1,6 +1,7 @@
 #![feature(type_name_of_val)]
 use std::io;
 use std::io::Read;
+use std::process::Stdio;
 use clap::{
     Parser,
     Subcommand,
@@ -118,13 +119,13 @@ struct Args {
 
 }
 
-#[tokio::main(flavor = "current_thread")]
-async fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
+fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
     if !validate {
-        let mut guest: Guest = config.into();
-        guest.run().await?;
-        guest.wait().await?;
-        Ok(())
+        let mut command = config.as_cmd();
+        command.args(["-serial", "mon:stdio"]);
+        command.stdin(Stdio::inherit()).stdout(Stdio::inherit()).output()
+            .map(|_| ())
+            .map_err(|err| err.into())
     } else {
         Ok(())
     }

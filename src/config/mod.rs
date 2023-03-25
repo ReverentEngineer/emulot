@@ -89,7 +89,6 @@ impl GuestConfig {
 
         command.arg("-m").arg(format!("{}", self.memory));
         command.arg("-display").arg(&self.display);
-        command.args(["-chardev", "stdio,id=mon0", "-mon", "chardev=mon0,mode=control"]);
         command
     }
 }
