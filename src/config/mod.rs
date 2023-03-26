@@ -29,6 +29,17 @@ impl<T> Args for Option<T> where T: Args {
 
 }
 
+impl<T> Args for Vec<T> where T: Args {
+
+    fn fmt_args<'a>(&'a self, cmd: &'a mut Command) -> &mut Command {
+        for arg in self {
+            arg.fmt_args(cmd);
+        }
+        cmd
+    }
+
+}
+
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct GuestConfig {
     arch: String,
@@ -94,6 +105,7 @@ impl GuestConfig {
         self.machine.fmt_args(&mut command);
         self.boot.fmt_args(&mut command);
         self.smp.fmt_args(&mut command);
+        self.drive.fmt_args(&mut command);
 
         command.arg("-m").arg(format!("{}", self.memory));
         command.arg("-display").arg(&self.display);
