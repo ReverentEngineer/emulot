@@ -8,7 +8,8 @@ The configuration file uses TOML. It currently two sections `[client]` and `[dae
 
 ## client
 
-* 
+* `url` - The base URL of the API to the HTTP daemon. This is expected to be 
+`tcp://<hostname>:<post>` or `unix:///path/to/emulotd.sock`. 
 
 ## daemeon
 
