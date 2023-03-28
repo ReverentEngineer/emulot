@@ -2,6 +2,7 @@
 
 [Introduction](./README.md)
 [Configuration](./configuration.md)
+[Tips](./tips.md)
 
 # Reference Guide
 
