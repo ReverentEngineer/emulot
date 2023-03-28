@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::process::Command;
-use crate::config::Args;
+use crate::{
+    Error,
+    config::AsArgs
+};
 
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct MachineConfig {
@@ -11,18 +13,18 @@ pub struct MachineConfig {
     props: Option<HashMap<String, String>>,
 }
 
-impl Args for MachineConfig {
-   
-    fn fmt_args<'a>(&'a self, cmd: &'a mut Command) -> &mut Command {
-        cmd.arg("-machine");
-        let mut argvalue = format!("{}", self.r#type);
+impl AsArgs for MachineConfig {
+  
+    fn as_args(&self) -> Result<Vec<String>, Error> {
         if let Some(props) = &self.props {
-            for (key, value) in props {
-                argvalue.push_str(&format!(",{key}={value}"));
-            }
+            let options = props.into_iter()
+                .map(|(key, value)| format!("{key}={value}"))
+                .collect::<Vec<_>>()
+                .join(",");
+            Ok(vec![format!("-machine"), options])
+        } else {
+            Ok(Vec::new())
         }
-        cmd.arg(argvalue);
-        cmd
     }
 }
 
@@ -39,8 +41,6 @@ mod tests {
                 props: Some(HashMap::new())
             };
         config.props.as_mut().unwrap().insert(format!("highmem"), format!("on"));
-        let mut cmd = Command::new("");
-        config.fmt_args(&mut cmd);
-        assert_eq!(cmd.get_args().count(), 2);
+        assert_eq!(config.as_args().unwrap().len(), 2);
     }
 }

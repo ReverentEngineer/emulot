@@ -9,33 +9,31 @@ mod machine;
 pub use machine::MachineConfig;
 mod boot;
 pub use boot::BootConfig;
+use crate::Error;
 
 /// A trait for interpreting into command args
-pub(crate) trait Args {
+pub(crate) trait AsArgs {
 
     /// Format into args
-    fn fmt_args<'a>(&'a self, command: &'a mut Command) -> &mut Command;
+    fn as_args(&self) -> Result<Vec<String>, Error>;
 
 }
 
-impl<T> Args for Option<T> where T: Args {
+impl<T> AsArgs for Option<T> where T: AsArgs {
 
-    fn fmt_args<'a>(&'a self, cmd: &'a mut Command) -> &mut Command {
+    fn as_args(&self) -> Result<Vec<String>, Error> {
         match self {
-            Some(args) => args.fmt_args(cmd),
-            None => cmd
+            Some(args) => args.as_args(),
+            None => Ok(Vec::new())
         }
     }
 
 }
 
-impl<T> Args for Vec<T> where T: Args {
+impl<T> AsArgs for Vec<T> where T: AsArgs {
 
-    fn fmt_args<'a>(&'a self, cmd: &'a mut Command) -> &mut Command {
-        for arg in self {
-            arg.fmt_args(cmd);
-        }
-        cmd
+    fn as_args(&self) -> Result<Vec<String>, Error> {
+        Ok(self.into_iter().map(|args| args.as_args()).collect::<Result<Vec<_>, Error>>()?.into_iter().flatten().collect())
     }
 
 }
@@ -102,10 +100,10 @@ impl GuestConfig {
             command.arg("-bios").arg(bios);
         }
 
-        self.machine.fmt_args(&mut command);
-        self.boot.fmt_args(&mut command);
-        self.smp.fmt_args(&mut command);
-        self.drive.fmt_args(&mut command);
+        command.args(self.machine.as_args().unwrap());
+        command.args(self.boot.as_args().unwrap());
+        command.args(self.smp.as_args().unwrap());
+        command.args(self.drive.as_args().unwrap());
 
         command.arg("-m").arg(format!("{}", self.memory));
         command.arg("-display").arg(&self.display);

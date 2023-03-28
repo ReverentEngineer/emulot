@@ -1,8 +1,10 @@
 //! The drive configuration
-use crate::config::Args;
+use crate::{
+    config::AsArgs,
+    Error
+};
 use serde::{Serialize, Deserialize};
 
-#[cfg_attr(feature = "sqlx", derive(sqlx::FromRow))]
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct DriveConfig {
 
@@ -23,8 +25,9 @@ pub struct DriveConfig {
     media: Option<String>
 }
 
-impl Args for DriveConfig {
-    fn fmt_args<'a>(&'a self, command: &'a mut std::process::Command) -> &mut std::process::Command {
+impl AsArgs for DriveConfig {
+
+    fn as_args(&self) -> Result<Vec<String>, Error> {
 
         let mut options = Vec::new();
 
@@ -40,12 +43,12 @@ impl Args for DriveConfig {
             options.push(format!("file={}", file));
         }
 
-        if !options.is_empty() {
-            command.arg("-drive");
-            command.arg(options.join(","));
-        }
 
-        command
+        if !options.is_empty() {
+            Ok(vec![String::from("-drive"), options.join(",")])
+        } else {
+            Ok(Vec::new())
+        }
     }
 }
 

@@ -1,7 +1,8 @@
-use core::fmt::Write;
 use serde::{Serialize, Deserialize};
-use std::process::Command;
-use crate::config::Args;
+use crate::{
+    Error,
+    config::AsArgs
+};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BootConfig {
@@ -9,20 +10,14 @@ pub struct BootConfig {
     order: Option<String>
 }
 
-impl Args for BootConfig {
-    fn fmt_args<'a>(&'a self, command: &'a mut Command) -> &mut Command {
-        let mut bootvalue = String::new();
-
+impl AsArgs for BootConfig {
+    
+    fn as_args(&self) -> Result<Vec<String>, Error> {
         if let Some(order) = &self.order {
-            write!(&mut bootvalue, "order={order}").unwrap();
+            Ok(vec![format!("-boot"), format!("order={order}")])
+        } else {
+            Ok(Vec::new())
         }
-
-        if !bootvalue.is_empty() {
-            command.arg("-boot");
-            command.arg(bootvalue);
-        }
-        
-        command
     }
 }
 
@@ -33,12 +28,10 @@ mod tests {
 
     #[test]
     fn args() {
-        let mut cmd = Command::new("");
-        BootConfig {
+        let config = BootConfig {
             order: None
-        }.fmt_args(&mut cmd);
-
-        assert_eq!(cmd.get_args().count(), 0);
+        };
+        assert_eq!(config.as_args().unwrap().len(), 0);
     }
 
 }
