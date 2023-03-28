@@ -104,7 +104,6 @@ fn wait_for_daemon() {
     let mut easy = Easy::new(Collector(Vec::new()));
     easy.url("http://localhost/health").unwrap();
     easy.unix_socket(&test_socket()).unwrap();
-    println!("Check fpr daemon!!");
     while easy.perform().is_err() {
     }
 }
