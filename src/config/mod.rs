@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 
+mod network;
+pub use network::NetworkDeviceConfig;
 mod drive;
 pub use drive::DriveConfig;
 mod smp;
@@ -64,7 +66,10 @@ pub struct GuestConfig {
     display: String,
     
     #[serde(skip_serializing_if = "Option::is_none")]
-    drive: Option<Vec<DriveConfig>>
+    drive: Option<Vec<DriveConfig>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    netdev: Option<Vec<NetworkDeviceConfig>>
 }
 
 impl GuestConfig {
@@ -81,7 +86,8 @@ impl GuestConfig {
             accel: None,
             machine: None,
             display: "none".to_string(),
-            drive: None
+            drive: None,
+            netdev: None
         }
     }
 
