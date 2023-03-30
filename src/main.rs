@@ -122,6 +122,7 @@ fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
     if !validate {
         let mut command = config.as_cmd();
         command.args(["-serial", "mon:stdio"]);
+        command.stderr(Stdio::inherit()).stderr(Stdio::inherit());
         command.stdin(Stdio::inherit()).stdout(Stdio::inherit()).output()
             .map(|output| {
                 if output.status.success() {
