@@ -123,7 +123,13 @@ fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
         let mut command = config.as_cmd();
         command.args(["-serial", "mon:stdio"]);
         command.stdin(Stdio::inherit()).stdout(Stdio::inherit()).output()
-            .map(|_| ())
+            .map(|output| {
+                if output.status.success() {
+                    ()
+                } else {
+                    std::process::exit(output.status.code().unwrap())
+                }
+            })
             .map_err(|err| err.into())
     } else {
         Ok(())
