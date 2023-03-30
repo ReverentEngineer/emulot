@@ -16,7 +16,11 @@ pub struct DriveConfig {
 
     /// The format of the file backing the drive
     #[serde(skip_serializing_if = "Option::is_none")]
-    format: Option<String>
+    format: Option<String>,
+
+    /// Media format (e.g. cdrom)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    media: Option<String>
 }
 
 impl Args for DriveConfig {
