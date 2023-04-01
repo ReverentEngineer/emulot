@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use crate::{
     Error,
@@ -12,7 +12,7 @@ pub struct NetworkDeviceConfig {
     r#type: String,
 
     #[serde(flatten)]
-    props: Option<HashMap<String, String>>,
+    props: Option<BTreeMap<String, String>>,
 
 }
 
@@ -44,14 +44,14 @@ mod tests {
     fn as_args_no_props() {
         let device = NetworkDeviceConfig {
             r#type: "user".to_string(),
-            props: Some(HashMap::new())
+            props: Some(BTreeMap::new())
         };
         assert_eq!(device.as_args().unwrap(), vec![format!("-netdev"), format!("user")]);
     }
     
     #[test]
     fn as_args_with_props() {
-        let mut props = HashMap::new();
+        let mut props = BTreeMap::new();
         props.insert(format!("id"), format!("n1"));
         props.insert(format!("net"), format!("192.168.0.1/24"));
         let device = NetworkDeviceConfig {
