@@ -1,6 +1,7 @@
 use std::{
     sync::Arc,
     net::ToSocketAddrs,
+    path::PathBuf
 };
 use serde::Deserialize;
 use axum::{
@@ -56,8 +57,17 @@ pub struct DaemonConfig {
     listen: Url,
 
     /// Database url
-    uri: String
+    uri: String,
 
+    /// Local storage
+    #[serde(deserialize_with = "crate::de::deserialize_path")]
+    local_storage: PathBuf
+
+}
+
+
+fn default_local_storage() -> PathBuf {
+    format!("{}/guests/storage", crate::runtime_dir()).into()
 }
 
 fn default_storage_uri() -> String {
@@ -69,6 +79,7 @@ impl Default for DaemonConfig {
     fn default() -> Self {
         Self {
             listen: crate::default_url(),
+            local_storage: default_local_storage(),
             uri: default_storage_uri()
         }
     }
@@ -100,7 +111,7 @@ pub async fn run(config: &DaemonConfig) -> Result<(), Error> {
     let config_storage = Arc::new(ConfigStorage::new(storage_uri)?);
     let state = State {
         storage: config_storage.clone(),
-        orchestrator: Orchestrator::new(config_storage).into()
+        orchestrator: Orchestrator::new(config_storage, &config.local_storage).into()
     };
 
     let listen = std::env::var("EMULOT_LISTEN").ok()

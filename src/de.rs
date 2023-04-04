@@ -1,4 +1,5 @@
 use core::fmt;
+use std::path::PathBuf;
 use serde::{
     Deserializer,
     de,
@@ -9,6 +10,33 @@ use crate::{
     Error,
     ErrorKind
 };
+
+pub fn deserialize_path<'de, D>(deserializer: D) -> Result<PathBuf, D::Error>
+where
+    D: Deserializer<'de>
+{
+    struct PathVisitor;
+
+    impl<'de> Visitor<'de> for PathVisitor {
+
+        type Value = PathBuf;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("url")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<PathBuf, E>
+        where
+            E: de::Error,
+        {
+            Ok(value.into())
+        }
+
+    }
+
+
+    deserializer.deserialize_str(PathVisitor)
+}
 
 pub fn deserialize_url<'de, D>(deserializer: D) -> Result<url::Url, D::Error>
 where

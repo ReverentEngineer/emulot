@@ -37,6 +37,7 @@ impl MessageDigest {
     }
    
     /// Caculate hash of input using provided algorithm
+    #[allow(dead_code)]
     pub fn calculate<S: AsRef<str>>(algorithm: S, input: &[u8]) -> Result<Vec<u8>, Error> {
         let mut md = Self::new(algorithm)?;
         md.update(input)?;

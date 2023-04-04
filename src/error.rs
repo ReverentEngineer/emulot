@@ -3,6 +3,7 @@ use core::fmt;
 #[derive(Debug)]
 pub enum ErrorKind {
     IOError,
+    SystemTimeError,
     EncodingError,
     DaemonError,
     StorageError,
@@ -19,6 +20,7 @@ impl fmt::Display for ErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ErrorKind::IOError => write!(f, "Input/output error"),
+            ErrorKind::SystemTimeError => write!(f, "System time error"),
             ErrorKind::EncodingError => write!(f, "Encoding error"),
             ErrorKind::DaemonError => write!(f, "Daemon error"),
             ErrorKind::StorageError => write!(f, "Storage error"),
@@ -128,6 +130,14 @@ impl From<openssl::error::ErrorStack> for Error {
 
     fn from(error: openssl::error::ErrorStack) -> Self {
         Self::new(ErrorKind::CryptoError, format!("{error}"))
+    }
+
+}
+
+impl From<std::time::SystemTimeError> for Error {
+
+    fn from(error: std::time::SystemTimeError) -> Self {
+        Self::new(ErrorKind::SystemTimeError, format!("{error}"))
     }
 
 }

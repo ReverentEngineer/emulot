@@ -1,5 +1,9 @@
 use serde::{Deserialize, Serialize};
-use std::process::Command;
+use std::{
+    path::Path,
+    process::Command
+};
+
 
 mod network;
 pub use network::NetworkDeviceConfig;
@@ -12,6 +16,8 @@ pub use machine::MachineConfig;
 mod boot;
 pub use boot::BootConfig;
 pub(crate) use crate::args::AsArgs;
+pub(crate) use crate::file::File;
+use crate::Error;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct GuestConfig {
@@ -28,7 +34,7 @@ pub struct GuestConfig {
     smp: Option<SmpConfig>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    bios: Option<String>,
+    bios: Option<File>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     accel: Option<String>,
@@ -64,7 +70,7 @@ impl GuestConfig {
         }
     }
 
-    pub(crate) fn as_cmd(&self) -> Command {
+    pub(crate) fn as_cmd<P: AsRef<Path>>(&self, local_storage: P) -> Result<Command, Error> {
         let mut command = Command::new(format!("qemu-system-{}", self.arch));
 
         if let Some(cpu) = &self.cpu {
@@ -76,7 +82,7 @@ impl GuestConfig {
         }
 
         if let Some(bios) = &self.bios {
-            command.arg("-bios").arg(bios);
+            command.arg("-bios").arg(bios.path(local_storage)?);
         }
 
         command.args(self.machine.as_args().unwrap());
@@ -86,7 +92,7 @@ impl GuestConfig {
 
         command.arg("-m").arg(format!("{}", self.memory));
         command.arg("-display").arg(&self.display);
-        command
+        Ok(command)
     }
 }
 

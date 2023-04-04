@@ -11,6 +11,7 @@ mod args;
 mod curl;
 mod error;
 mod crypto;
+mod file;
 mod qmp;
 mod config;
 mod guest;
@@ -123,7 +124,7 @@ struct Args {
 
 fn run(config: GuestConfig, validate: bool) -> Result<(), Error> {
     if !validate {
-        let mut command = config.as_cmd();
+        let mut command = config.as_cmd(runtime_dir())?;
         command.args(["-serial", "mon:stdio"]);
         command.stderr(Stdio::inherit()).stderr(Stdio::inherit());
         command.stdin(Stdio::inherit()).stdout(Stdio::inherit()).output()

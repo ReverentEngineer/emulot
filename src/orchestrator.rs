@@ -1,4 +1,10 @@
-use std::sync::Arc;
+use std::{
+    sync::Arc,
+    path::{
+        Path,
+        PathBuf
+    }
+};
 use tokio::sync::Mutex;
 use chashmap::CHashMap;
 use crate::{
@@ -13,6 +19,8 @@ pub struct Orchestrator {
     /// On-disk storage
     storage: Arc<ConfigStorage>,
 
+    local_storage: PathBuf,
+
     /// In-memory guests
     guests: CHashMap<String, Arc<Mutex<Guest>>> 
 
@@ -20,9 +28,10 @@ pub struct Orchestrator {
 
 impl Orchestrator {
 
-    pub fn new(storage: Arc<ConfigStorage>) -> Self {
+    pub fn new<P: AsRef<Path>>(storage: Arc<ConfigStorage>, local_storage: P) -> Self {
         Self {
             storage,
+            local_storage: local_storage.as_ref().to_path_buf(),
             guests: CHashMap::new()
         }
     }
@@ -31,7 +40,9 @@ impl Orchestrator {
         let mut guest = self.guests.get(&id.to_string());
         if guest.is_none() {
             let config = self.storage.get(id)?;
-            self.guests.insert(id.to_string(), Arc::new(Mutex::new(config.into())));
+            let mut local_storage = self.local_storage.clone();
+            local_storage.push(format!("{id}"));
+            self.guests.insert(id.to_string(), Arc::new(Mutex::new(Guest::new(config, local_storage))));
             guest = self.guests.get(&id.to_string());
         }
 

@@ -1,4 +1,10 @@
-use std::process::Stdio;
+use std::{
+    process::Stdio,
+    path::{
+        Path,
+        PathBuf
+    }
+};
 use tokio::{
     io::BufReader,
     process::{
@@ -32,7 +38,8 @@ pub struct Guest {
     config: GuestConfig,
     process: Option<Child>,
     writer: Option<ChildStdin>,
-    reader: Option<BufReader<ChildStdout>>
+    reader: Option<BufReader<ChildStdout>>,
+    local_storage: PathBuf 
 }
 
 impl From<Guest> for GuestConfig {
@@ -45,9 +52,19 @@ impl From<Guest> for GuestConfig {
 
 impl Guest {
 
+    pub fn new<P: AsRef<Path>>(config: GuestConfig, local_storage: P) -> Self {
+        Self {
+            config,
+            process: None,
+            writer: None,
+            reader: None,
+            local_storage: local_storage.as_ref().to_path_buf()
+        }
+    }
+
     pub async fn run(&mut self) -> Result<(), Error> {
         if self.status()? != Status::Running {
-            let mut command = self.config.as_cmd();
+            let mut command = self.config.as_cmd(&self.local_storage)?;
             // Allow for controlling via QMP through stdio
             command.args(["-chardev", "stdio,id=mon0", "-mon", "chardev=mon0,mode=control"]);
             let mut command = Into::<tokio::process::Command>::into(command); 
@@ -146,17 +163,6 @@ impl Guest {
     }
 }
 
-impl From<GuestConfig> for Guest {
-    fn from(config: GuestConfig) -> Self {
-        Self {
-            config,
-            process: None,
-            reader: None,
-            writer: None
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
 
@@ -165,7 +171,7 @@ mod tests {
     #[tokio::test]
     async fn run() {
         let config = GuestConfig::new("x86_64".to_string(), 512);
-        let mut guest = Into::<Guest>::into(config);
+        let mut guest = Guest::new(config, "");
         guest.run().await.unwrap();
         guest.shutdown().await.unwrap();
         guest.kill().await.unwrap();
