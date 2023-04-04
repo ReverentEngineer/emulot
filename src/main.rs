@@ -7,6 +7,7 @@ use clap::{
 };
 use serde::Deserialize;
 
+mod args;
 mod error;
 mod crypto;
 mod qmp;
