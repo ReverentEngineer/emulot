@@ -15,6 +15,7 @@ chashmap = "2.2.2"
 clap = { version = "4.1.8", features = ["derive"] }
 curl = "0.4.44"
 hyper = { version = "0.14.25", features = ["server"] }
+openssl = "0.10.48"
 pin-project-lite = "0.2.9"
 rusqlite = "0.28.0"
 serde = { version = "1.0.152", features = ["derive"] }

@@ -6,6 +6,7 @@ pub enum ErrorKind {
     EncodingError,
     DaemonError,
     StorageError,
+    CryptoError,
     QMPError,
     AlreadyRunning,
     AlreadyStopped,
@@ -21,6 +22,7 @@ impl fmt::Display for ErrorKind {
             ErrorKind::EncodingError => write!(f, "Encoding error"),
             ErrorKind::DaemonError => write!(f, "Daemon error"),
             ErrorKind::StorageError => write!(f, "Storage error"),
+            ErrorKind::CryptoError => write!(f, "Crypto error"),
             ErrorKind::QMPError => write!(f, "QMP error"),
             ErrorKind::AlreadyRunning => write!(f, "Already running."),
             ErrorKind::AlreadyStopped => write!(f, "Already stopped."),
@@ -118,6 +120,14 @@ impl From<rusqlite::Error> for Error {
                 Error::new(ErrorKind::NoSuchEntity, format!("{error}")),
             _ => Error::new(ErrorKind::StorageError, format!("{error}"))
         }
+    }
+
+}
+
+impl From<openssl::error::ErrorStack> for Error {
+
+    fn from(error: openssl::error::ErrorStack) -> Self {
+        Self::new(ErrorKind::CryptoError, format!("{error}"))
     }
 
 }

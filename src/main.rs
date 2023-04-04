@@ -8,6 +8,7 @@ use clap::{
 use serde::Deserialize;
 
 mod error;
+mod crypto;
 mod qmp;
 mod config;
 mod guest;
