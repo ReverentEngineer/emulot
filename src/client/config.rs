@@ -1,9 +1,7 @@
 use core::marker::PhantomData;
 use curl::easy::{
     Easy2 as Easy,
-    Handler,
     List,
-    WriteError,
     HttpVersion
 };
 use serde::{
@@ -17,20 +15,12 @@ use crate::{
     de::percent_decode
 };
 
+use crate::curl::Collector;
 
 #[derive(Clone, Deserialize)]
 pub struct ClientConfig {
     #[serde(deserialize_with = "crate::de::deserialize_url")]
     url: Url
-}
-
-struct Collector(Vec<u8>);
-
-impl Handler for Collector {
-    fn write(&mut self, data: &[u8]) -> Result<usize, WriteError> {
-        self.0.extend_from_slice(data);
-        Ok(data.len())
-    }
 }
 
 pub struct NeedsEndpoint;
