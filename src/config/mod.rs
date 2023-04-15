@@ -4,7 +4,8 @@ use std::{
     process::Command
 };
 
-
+mod device;
+pub use device::DeviceConfig;
 mod network;
 pub use network::NetworkDeviceConfig;
 mod drive;
@@ -49,7 +50,10 @@ pub struct GuestConfig {
     drive: Option<Vec<DriveConfig>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    netdev: Option<Vec<NetworkDeviceConfig>>
+    netdev: Option<Vec<NetworkDeviceConfig>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    device: Option<Vec<DeviceConfig>>
 }
 
 impl GuestConfig {
@@ -67,7 +71,8 @@ impl GuestConfig {
             machine: None,
             display: "none".to_string(),
             drive: None,
-            netdev: None
+            netdev: None,
+            device: None
         }
     }
 
@@ -91,6 +96,7 @@ impl GuestConfig {
         command.args(self.smp.as_args().unwrap());
         command.args(self.drive.as_args().unwrap());
         command.args(self.netdev.as_args().unwrap());
+        command.args(self.device.as_args().unwrap());
 
         command.arg("-m").arg(format!("{}", self.memory));
         command.arg("-display").arg(&self.display);
