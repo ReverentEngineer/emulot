@@ -90,6 +90,7 @@ impl GuestConfig {
         command.args(self.boot.as_args().unwrap());
         command.args(self.smp.as_args().unwrap());
         command.args(self.drive.as_args().unwrap());
+        command.args(self.netdev.as_args().unwrap());
 
         command.arg("-m").arg(format!("{}", self.memory));
         command.arg("-display").arg(&self.display);
