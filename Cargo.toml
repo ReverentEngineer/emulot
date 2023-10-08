@@ -1,6 +1,6 @@
 [package]
 name = "emulot"
-version = "2.1.0"
+version = "2.1.1"
 description = "A configuration management solution for QEMU"
 edition = "2021"
 authors = ["Jeff Caffrey-Hill <jeff@caffreyhill.com>"]
