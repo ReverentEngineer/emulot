@@ -10,6 +10,8 @@ mod network;
 pub use network::NetworkDeviceConfig;
 mod drive;
 pub use drive::DriveConfig;
+mod filesystem;
+pub use filesystem::FilesystemDeviceConfig;
 mod smp;
 pub use smp::SmpConfig;
 mod machine;
@@ -53,7 +55,10 @@ pub struct GuestConfig {
     netdev: Option<Vec<NetworkDeviceConfig>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    device: Option<Vec<DeviceConfig>>
+    device: Option<Vec<DeviceConfig>>,
+ 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fsdev: Option<Vec<FilesystemDeviceConfig>>
 }
 
 impl GuestConfig {
@@ -72,7 +77,8 @@ impl GuestConfig {
             display: "none".to_string(),
             drive: None,
             netdev: None,
-            device: None
+            device: None,
+            fsdev: None
         }
     }
 
