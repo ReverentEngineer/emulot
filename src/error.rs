@@ -5,10 +5,8 @@ pub enum ErrorKind {
     IOError,
     SystemTimeError,
     EncodingError,
-    DaemonError,
+    HarnessError,
     StorageError,
-    CryptoError,
-    QMPError,
     AlreadyRunning,
     AlreadyStopped,
     AlreadyExists,
@@ -22,10 +20,8 @@ impl fmt::Display for ErrorKind {
             ErrorKind::IOError => write!(f, "Input/output error"),
             ErrorKind::SystemTimeError => write!(f, "System time error"),
             ErrorKind::EncodingError => write!(f, "Encoding error"),
-            ErrorKind::DaemonError => write!(f, "Daemon error"),
+            ErrorKind::HarnessError => write!(f, "Harness error"),
             ErrorKind::StorageError => write!(f, "Storage error"),
-            ErrorKind::CryptoError => write!(f, "Crypto error"),
-            ErrorKind::QMPError => write!(f, "QMP error"),
             ErrorKind::AlreadyRunning => write!(f, "Already running."),
             ErrorKind::AlreadyStopped => write!(f, "Already stopped."),
             ErrorKind::AlreadyExists => write!(f, "Already exists"),
@@ -56,6 +52,10 @@ impl Error {
 
 }
 
+impl std::error::Error for Error {
+
+}
+
 impl fmt::Display for Error {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -80,26 +80,10 @@ impl From<serde_json::Error> for Error {
 
 }
 
-impl From<curl::Error> for Error {
-
-    fn from(error: curl::Error) -> Self {
-        Error::new(ErrorKind::IOError, format!("{error}"))
-    }
-
-}
-
 impl From<toml::de::Error> for Error {
 
     fn from(error: toml::de::Error) -> Self {
         Error::new(ErrorKind::IOError, format!("{error}"))
-    }
-
-}
-
-impl From<hyper::Error> for Error {
-
-    fn from(error: hyper::Error) -> Self {
-        Error::new(ErrorKind::DaemonError, format!("{error}"))
     }
 
 }
@@ -126,18 +110,18 @@ impl From<rusqlite::Error> for Error {
 
 }
 
-impl From<openssl::error::ErrorStack> for Error {
-
-    fn from(error: openssl::error::ErrorStack) -> Self {
-        Self::new(ErrorKind::CryptoError, format!("{error}"))
-    }
-
-}
-
 impl From<std::time::SystemTimeError> for Error {
 
     fn from(error: std::time::SystemTimeError) -> Self {
         Self::new(ErrorKind::SystemTimeError, format!("{error}"))
+    }
+
+}
+
+impl From<system_harness::Error> for Error {
+
+    fn from(error: system_harness::Error) -> Self {
+        Self::new(ErrorKind::HarnessError, format!("{error}"))
     }
 
 }
