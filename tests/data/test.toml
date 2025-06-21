@@ -1,4 +1,23 @@
 arch = "aarch64"
 memory = 512
+
 [machine]
 type = "virt"
+
+[[device]]
+driver="virtio-net-pci"
+netdev="net1"
+
+[[netdev]]
+id="net1"
+type="user"
+hostfwd=["tcp::60022-:22"]
+
+[[device]]
+driver="virtio-blk"
+drive="file1"
+
+[[blockdev]]
+driver="file"
+node-name="file1"
+filename="noble-server-cloudimg-arm64.img"

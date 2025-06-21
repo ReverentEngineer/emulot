@@ -1,6 +1,6 @@
 [package]
 name = "emulot"
-version = "2.1.1"
+version = "2.2.0"
 description = "A configuration management solution for QEMU"
 edition = "2021"
 authors = ["Jeff Caffrey-Hill <jeff@caffreyhill.com>"]
@@ -8,14 +8,24 @@ license = "MIT"
 repository = "https://github.com/ReverentEngineer/emulot"
 readme = "README.md"
 keywords = ["emulation", "management", "QEMU"]
+[patch.crates-io]
+cmdstruct = { path = "../cmdstruct" }
 
 [dependencies]
 clap = { version = "4.1.8", features = ["derive"] }
-rusqlite = "0.28.0"
+cmdstruct = "2.0.1"
+crossterm = { version = "0.27.0", features = ["event-stream"] }
+env_logger = "0.11.6"
+futures = "0.3.31"
+libc = "0.2.154"
+log = "0.4.21"
+rusqlite = { version = "0.31.0", features = ["bundled"]}
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.115"
-system-harness = { version = "0"  }
+system-harness = { path = "../system-harness" }
+tokio = { version = "1.43.0", features = ["io-util", "signal"] }
 toml = "0.7.3"
 
 [dev-dependencies]
+curl = "0.4.46"
 serde_test = "1.0.159"
